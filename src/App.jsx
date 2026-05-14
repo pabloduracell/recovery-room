@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./styles.css";
 
 const TOTAL_FRAMES = 100;
@@ -46,6 +46,10 @@ export default function App() {
 
   const loadProgress = loadedCount / TOTAL_FRAMES;
   const gameProgress = clicks / TOTAL_PILLS;
+
+  const bgMusicRef = useRef(null);
+  const clickSoundRef = useRef(null);
+  const winSoundRef = useRef(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("best-treatment-time");
@@ -101,8 +105,13 @@ export default function App() {
 
   function startGame(e) {
     e.stopPropagation();
+  
     setReady(true);
-    bgMusic.play();
+  
+    if (bgMusicRef.current) {
+      bgMusicRef.current.currentTime = 0;
+      bgMusicRef.current.play().catch(() => {});
+    }
   }
 
   function handleClick(e) {
@@ -115,6 +124,10 @@ export default function App() {
     }
 
     navigator.vibrate?.(15);
+    if (clickSoundRef.current) {
+      clickSoundRef.current.currentTime = 0;
+      clickSoundRef.current.play().catch(() => {});
+    }
     clickSound.currentTime = 0;
 clickSound.play().catch(() => {});
 
@@ -144,6 +157,14 @@ clickSound.play().catch(() => {});
       bgMusic.pause();
 winSound.currentTime = 0;
 winSound.play().catch(() => {});
+if (bgMusicRef.current) {
+  bgMusicRef.current.pause();
+}
+
+if (winSoundRef.current) {
+  winSoundRef.current.currentTime = 0;
+  winSoundRef.current.play().catch(() => {});
+}
 
       setFinished(true);
       setElapsed(finalTime);
@@ -170,6 +191,11 @@ winSound.play().catch(() => {});
     setPills([]);
     setCurrentFrame(frames[0]);
     bgMusic.currentTime = 0;
+
+    if (bgMusicRef.current) {
+      bgMusicRef.current.currentTime = 0;
+      bgMusicRef.current.play().catch(() => {});
+    }
   }
 
   return (
@@ -340,4 +366,16 @@ winSound.play().catch(() => {});
       )}
     </main>
   );
+
+  useEffect(() => {
+    bgMusicRef.current = new Audio("/assets/tension.mp3");
+    bgMusicRef.current.loop = true;
+    bgMusicRef.current.volume = 0.18;
+  
+    clickSoundRef.current = new Audio("/assets/click.mp3");
+    clickSoundRef.current.volume = 0.45;
+  
+    winSoundRef.current = new Audio("/assets/win.mp3");
+    winSoundRef.current.volume = 0.65;
+  }, []);
 }
