@@ -7,6 +7,11 @@ const bgMusic = new Audio("/assets/tension.mp3");
 
 bgMusic.loop = true;
 bgMusic.volume = 0.18;
+const clickSound = new Audio("/assets/click.mp3");
+clickSound.volume = 0.35;
+
+const winSound = new Audio("/assets/win.mp3");
+winSound.volume = 0.55;
 
 const frames = Array.from({ length: TOTAL_FRAMES }, (_, i) => {
   const num = String(i + 1).padStart(3, "0");
@@ -110,6 +115,8 @@ export default function App() {
     }
 
     navigator.vibrate?.(15);
+    clickSound.currentTime = 0;
+clickSound.play().catch(() => {});
 
     const nextClicks = Math.min(clicksRef.current + 1, TOTAL_PILLS);
 
@@ -134,6 +141,9 @@ export default function App() {
 
     if (nextClicks >= TOTAL_PILLS) {
       const finalTime = Date.now() - startTimeRef.current;
+      bgMusic.pause();
+winSound.currentTime = 0;
+winSound.play().catch(() => {});
 
       setFinished(true);
       setElapsed(finalTime);
@@ -188,9 +198,11 @@ export default function App() {
             Recovery Room Experience
           </p>
 
-          <h1>
-            ¿Preparado para curar todos tus dolores?
-          </h1>
+          <img
+  src="/assets/ready.png"
+  alt="Ready"
+  className="ready-image"
+/>
 
           <div className="loading-bar">
             <div
@@ -218,9 +230,11 @@ export default function App() {
             Tratamiento listo
           </p>
 
-          <h1>
-            ¿Preparado para curar todos tus dolores?
-          </h1>
+          <img
+  src="/assets/ready.png"
+  alt="¿Preparado para curar todos tus dolores?"
+  className="ready-image"
+/>
 
           <button
             className="start-button"
