@@ -3,15 +3,6 @@ import "./styles.css";
 
 const TOTAL_FRAMES = 100;
 const TOTAL_PILLS = 100;
-const bgMusic = new Audio("/assets/tension.mp3");
-
-bgMusic.loop = true;
-bgMusic.volume = 0.18;
-const clickSound = new Audio("/assets/click.mp3");
-clickSound.volume = 0.35;
-
-const winSound = new Audio("/assets/win.mp3");
-winSound.volume = 0.55;
 
 const frames = Array.from({ length: TOTAL_FRAMES }, (_, i) => {
   const num = String(i + 1).padStart(3, "0");
@@ -44,12 +35,24 @@ export default function App() {
   const startTimeRef = useRef(null);
   const clicksRef = useRef(0);
 
-  const loadProgress = loadedCount / TOTAL_FRAMES;
-  const gameProgress = clicks / TOTAL_PILLS;
-
   const bgMusicRef = useRef(null);
   const clickSoundRef = useRef(null);
   const winSoundRef = useRef(null);
+
+  const loadProgress = loadedCount / TOTAL_FRAMES;
+  const gameProgress = clicks / TOTAL_PILLS;
+
+  useEffect(() => {
+    bgMusicRef.current = new Audio("/assets/tension.mp3");
+    bgMusicRef.current.loop = true;
+    bgMusicRef.current.volume = 0.18;
+
+    clickSoundRef.current = new Audio("/assets/click.mp3");
+    clickSoundRef.current.volume = 0.45;
+
+    winSoundRef.current = new Audio("/assets/win.mp3");
+    winSoundRef.current.volume = 0.65;
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem("best-treatment-time");
@@ -103,11 +106,20 @@ export default function App() {
     return () => clearInterval(interval);
   }, [started, finished]);
 
+  function playClickSound() {
+    if (!clickSoundRef.current) return;
+
+    const sound = clickSoundRef.current.cloneNode();
+    sound.volume = 0.45;
+    sound.currentTime = 0;
+    sound.play().catch(() => {});
+  }
+
   function startGame(e) {
     e.stopPropagation();
-  
+
     setReady(true);
-  
+
     if (bgMusicRef.current) {
       bgMusicRef.current.currentTime = 0;
       bgMusicRef.current.play().catch(() => {});
@@ -124,15 +136,9 @@ export default function App() {
     }
 
     navigator.vibrate?.(15);
-    if (clickSoundRef.current) {
-      clickSoundRef.current.currentTime = 0;
-      clickSoundRef.current.play().catch(() => {});
-    }
-    clickSound.currentTime = 0;
-clickSound.play().catch(() => {});
+    playClickSound();
 
     const nextClicks = Math.min(clicksRef.current + 1, TOTAL_PILLS);
-
     clicksRef.current = nextClicks;
 
     const nextFrameIndex = Math.min(
@@ -154,27 +160,22 @@ clickSound.play().catch(() => {});
 
     if (nextClicks >= TOTAL_PILLS) {
       const finalTime = Date.now() - startTimeRef.current;
-      bgMusic.pause();
-winSound.currentTime = 0;
-winSound.play().catch(() => {});
-if (bgMusicRef.current) {
-  bgMusicRef.current.pause();
-}
 
-if (winSoundRef.current) {
-  winSoundRef.current.currentTime = 0;
-  winSoundRef.current.play().catch(() => {});
-}
+      if (bgMusicRef.current) {
+        bgMusicRef.current.pause();
+      }
+
+      if (winSoundRef.current) {
+        winSoundRef.current.currentTime = 0;
+        winSoundRef.current.play().catch(() => {});
+      }
 
       setFinished(true);
       setElapsed(finalTime);
 
       if (!bestTime || finalTime < bestTime) {
         setBestTime(finalTime);
-        localStorage.setItem(
-          "best-treatment-time",
-          String(finalTime)
-        );
+        localStorage.setItem("best-treatment-time", String(finalTime));
       }
     }
   }
@@ -190,7 +191,6 @@ if (winSoundRef.current) {
     setElapsed(0);
     setPills([]);
     setCurrentFrame(frames[0]);
-    bgMusic.currentTime = 0;
 
     if (bgMusicRef.current) {
       bgMusicRef.current.currentTime = 0;
@@ -200,9 +200,9 @@ if (winSoundRef.current) {
 
   return (
     <main
-  className={`app ${started ? "pulse-hit" : ""}`}
-  onPointerDown={handleClick}
->
+      className={`app ${started ? "pulse-hit" : ""}`}
+      onPointerDown={handleClick}
+    >
       <img
         className="frame-image"
         src={currentFrame}
@@ -225,17 +225,13 @@ if (winSoundRef.current) {
           </p>
 
           <img
-  src="/assets/ready.png"
-  alt="Ready"
-  className="ready-image"
-/>
+            src="/assets/ready.png"
+            alt="Ready"
+            className="ready-image"
+          />
 
           <div className="loading-bar">
-            <div
-              style={{
-                width: `${loadProgress * 100}%`,
-              }}
-            />
+            <div style={{ width: `${loadProgress * 100}%` }} />
           </div>
 
           <p className="loading-count">
@@ -257,10 +253,10 @@ if (winSoundRef.current) {
           </p>
 
           <img
-  src="/assets/ready.png"
-  alt="¿Preparado para curar todos tus dolores?"
-  className="ready-image"
-/>
+            src="/assets/ready.png"
+            alt="¿Preparado para curar todos tus dolores?"
+            className="ready-image"
+          />
 
           <button
             className="start-button"
@@ -287,20 +283,14 @@ if (winSoundRef.current) {
 
               <div>
                 <small>Récord</small>
-                <strong>
-                  {bestTime
-                    ? formatTime(bestTime)
-                    : "--:--.-"}
-                </strong>
+                <strong>{bestTime ? formatTime(bestTime) : "--:--.-"}</strong>
               </div>
             </div>
 
             <div className="bar">
               <div
                 className="bar-fill"
-                style={{
-                  width: `${gameProgress * 100}%`,
-                }}
+                style={{ width: `${gameProgress * 100}%` }}
               />
             </div>
           </section>
@@ -329,9 +319,7 @@ if (winSoundRef.current) {
           {finished && (
             <section
               className="final-card"
-              onPointerDown={(e) =>
-                e.stopPropagation()
-              }
+              onPointerDown={(e) => e.stopPropagation()}
             >
               <div className="achievement">
                 Logro desbloqueado
@@ -366,16 +354,4 @@ if (winSoundRef.current) {
       )}
     </main>
   );
-
-  useEffect(() => {
-    bgMusicRef.current = new Audio("/assets/tension.mp3");
-    bgMusicRef.current.loop = true;
-    bgMusicRef.current.volume = 0.18;
-  
-    clickSoundRef.current = new Audio("/assets/click.mp3");
-    clickSoundRef.current.volume = 0.45;
-  
-    winSoundRef.current = new Audio("/assets/win.mp3");
-    winSoundRef.current.volume = 0.65;
-  }, []);
 }
