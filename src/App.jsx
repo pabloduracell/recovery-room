@@ -3,6 +3,10 @@ import "./styles.css";
 
 const TOTAL_FRAMES = 100;
 const TOTAL_PILLS = 100;
+const bgMusic = new Audio("/assets/tension.mp3");
+
+bgMusic.loop = true;
+bgMusic.volume = 0.18;
 
 const frames = Array.from({ length: TOTAL_FRAMES }, (_, i) => {
   const num = String(i + 1).padStart(3, "0");
@@ -93,6 +97,7 @@ export default function App() {
   function startGame(e) {
     e.stopPropagation();
     setReady(true);
+    bgMusic.play();
   }
 
   function handleClick(e) {
@@ -154,6 +159,7 @@ export default function App() {
     setElapsed(0);
     setPills([]);
     setCurrentFrame(frames[0]);
+    bgMusic.currentTime = 0;
   }
 
   return (
