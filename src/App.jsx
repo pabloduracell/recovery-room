@@ -32,7 +32,6 @@ export default function App() {
   const [finished, setFinished] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [bestTime, setBestTime] = useState(null);
-
   const [buttonPressed, setButtonPressed] = useState(false);
 
   const startTimeRef = useRef(null);
@@ -112,14 +111,6 @@ export default function App() {
     return () => clearInterval(interval);
   }, [started, finished]);
 
-  function playPillClick() {
-    const click = new Audio("/assets/clic.mp3");
-
-    click.volume = 0.42;
-
-    click.play().catch(() => {});
-  }
-
   function startGame(e) {
     e.stopPropagation();
 
@@ -153,8 +144,6 @@ export default function App() {
     }
 
     navigator.vibrate?.(15);
-
-    playPillClick();
 
     const nextClicks = Math.min(
       clicksRef.current + 1,
@@ -367,17 +356,22 @@ export default function App() {
               key={pill.id}
               className="pill"
               style={{
-                left: pill.x - 35,
-                top: pill.y - 35,
+                left: pill.x - 20,
+                top: pill.y - 20,
                 "--mx": `${
-                  window.innerWidth - pill.x
+                  window.innerWidth / 2 - pill.x
                 }px`,
                 "--my": `${
                   window.innerHeight / 2 - pill.y
                 }px`,
               }}
             >
-              💊
+              <img
+                src="/assets/pill.png"
+                alt="pill"
+                className="pill-image"
+                draggable="false"
+              />
             </div>
           ))}
 
