@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
-import './styles.css';
+import { useEffect, useRef, useState } from "react";
+import "./styles.css";
 
 const TOTAL_FRAMES = 100;
 const TOTAL_PILLS = 100;
 
 const frames = Array.from({ length: TOTAL_FRAMES }, (_, i) => {
-  const num = String(i + 1).padStart(3, '0');
+  const num = String(i + 1).padStart(3, "0");
   return `https://res.cloudinary.com/dbhwofvfv/image/upload/q_auto/f_auto/v1778683206/frame_${num}.jpg`;
 });
 
@@ -15,16 +15,13 @@ function formatTime(ms) {
   const seconds = total % 60;
   const tenths = Math.floor((ms % 1000) / 100);
 
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(
-    2,
-    '0'
-  )}.${tenths}`;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${tenths}`;
 }
 
 export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [loadedCount, setLoadedCount] = useState(0);
-  const [loadErrors, setLoadErrors] = useState(0);
+  const [ready, setReady] = useState(false);
 
   const [clicks, setClicks] = useState(0);
   const [currentFrame, setCurrentFrame] = useState(frames[0]);
@@ -33,26 +30,28 @@ export default function App() {
   const [started, setStarted] = useState(false);
   const [finished, setFinished] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [bestTime, setBestTime] = useState(null);
 
   const startTimeRef = useRef(null);
   const clicksRef = useRef(0);
-  const loadedImagesRef = useRef([]);
 
   const loadProgress = loadedCount / TOTAL_FRAMES;
   const gameProgress = clicks / TOTAL_PILLS;
 
   useEffect(() => {
+    const stored = localStorage.getItem("best-treatment-time");
+    if (stored) setBestTime(Number(stored));
+  }, []);
+
+  useEffect(() => {
     let completed = 0;
-    let errors = 0;
     let cancelled = false;
 
-    frames.forEach((src, index) => {
+    frames.forEach((src) => {
       const img = new Image();
 
       img.onload = () => {
         if (cancelled) return;
-
-        loadedImagesRef.current[index] = img;
 
         completed++;
         setLoadedCount(completed);
@@ -65,10 +64,7 @@ export default function App() {
       img.onerror = () => {
         if (cancelled) return;
 
-        errors++;
         completed++;
-
-        setLoadErrors(errors);
         setLoadedCount(completed);
 
         if (completed === TOTAL_FRAMES) {
@@ -94,9 +90,13 @@ export default function App() {
     return () => clearInterval(interval);
   }, [started, finished]);
 
+  function startGame(e) {
+    e.stopPropagation();
+    setReady(true);
+  }
+
   function handleClick(e) {
-    if (!loaded) return;
-    if (finished) return;
+    if (!loaded || !ready || finished) return;
     if (clicksRef.current >= TOTAL_PILLS) return;
 
     if (!started) {
@@ -104,7 +104,10 @@ export default function App() {
       startTimeRef.current = Date.now();
     }
 
+    navigator.vibrate?.(15);
+
     const nextClicks = Math.min(clicksRef.current + 1, TOTAL_PILLS);
+
     clicksRef.current = nextClicks;
 
     const nextFrameIndex = Math.min(
@@ -113,12 +116,10 @@ export default function App() {
     );
 
     setClicks(nextClicks);
-
-    // CAMBIO CLAVE: frame directo, sin animación intermedia
     setCurrentFrame(frames[nextFrameIndex]);
 
     setPills((prev) => [
-      ...prev.slice(-24),
+      ...prev.slice(-20),
       {
         id: Math.random(),
         x: e.clientX,
@@ -127,8 +128,18 @@ export default function App() {
     ]);
 
     if (nextClicks >= TOTAL_PILLS) {
+      const finalTime = Date.now() - startTimeRef.current;
+
       setFinished(true);
-      setElapsed(Date.now() - startTimeRef.current);
+      setElapsed(finalTime);
+
+      if (!bestTime || finalTime < bestTime) {
+        setBestTime(finalTime);
+        localStorage.setItem(
+          "best-treatment-time",
+          String(finalTime)
+        );
+      }
     }
   }
 
@@ -146,10 +157,18 @@ export default function App() {
   }
 
   return (
-    <main className="app" onPointerDown={handleClick}>
-      <img className="frame-image" src={currentFrame} draggable="false" />
+    <main
+  className={`app ${started ? "pulse-hit" : ""}`}
+  onPointerDown={handleClick}
+>
+      <img
+        className="frame-image"
+        src={currentFrame}
+        draggable="false"
+      />
 
       <div className="vignette" />
+      <div className="ambient-glow" />
 
       {!loaded && (
         <section className="loading-screen">
@@ -159,26 +178,75 @@ export default function App() {
             alt="Recovery Room"
           />
 
-          <h1>¿Preparado para curar todos tus dolores?</h1>
+          <p className="eyebrow">
+            Recovery Room Experience
+          </p>
+
+          <h1>
+            ¿Preparado para curar todos tus dolores?
+          </h1>
 
           <div className="loading-bar">
-            <div style={{ width: `${loadProgress * 100}%` }} />
+            <div
+              style={{
+                width: `${loadProgress * 100}%`,
+              }}
+            />
           </div>
 
-          <p>
-            Cargando tratamiento {loadedCount}/100
-            {loadErrors > 0 ? ` · ${loadErrors} errores` : ''}
+          <p className="loading-count">
+            Preparando tratamiento · {loadedCount}/100
           </p>
         </section>
       )}
 
-      {loaded && (
+      {loaded && !ready && (
+        <section className="intro-screen">
+          <img
+            className="loading-logo"
+            src="/assets/logo.png"
+            alt="Recovery Room"
+          />
+
+          <p className="eyebrow">
+            Tratamiento listo
+          </p>
+
+          <h1>
+            ¿Preparado para curar todos tus dolores?
+          </h1>
+
+          <button
+            className="start-button"
+            onPointerDown={startGame}
+          >
+            Iniciar tratamiento
+          </button>
+        </section>
+      )}
+
+      {loaded && ready && (
         <>
           <section className="hud">
             <div className="hud-top">
-              <span>Estado del paciente</span>
-              <span>{clicks}/100 dosis</span>
-              <span>{formatTime(elapsed)}</span>
+              <div>
+                <small>Estado</small>
+                <strong>{clicks}/100 dosis</strong>
+              </div>
+
+              <div>
+                <small>Tiempo</small>
+                <strong>{formatTime(elapsed)}</strong>
+              </div>
+
+              <div>
+                <small>Récord</small>
+                <strong>
+                  {bestTime
+                    ? formatTime(bestTime)
+                    : "--:--.-"}
+                </strong>
+              </div>
             </div>
 
             <div className="bar">
@@ -192,7 +260,9 @@ export default function App() {
           </section>
 
           {!started && (
-            <div className="start-message">Pincha para alimentar</div>
+            <div className="start-message">
+              Pincha en la pantalla para iniciar tratamiento
+            </div>
           )}
 
           {pills.map((pill) => (
@@ -202,8 +272,8 @@ export default function App() {
               style={{
                 left: pill.x - 35,
                 top: pill.y - 35,
-                '--mx': `${window.innerWidth / 2 - pill.x}px`,
-                '--my': `${window.innerHeight / 2 - pill.y}px`,
+                "--mx": `${window.innerWidth / 2 - pill.x}px`,
+                "--my": `${window.innerHeight / 2 - pill.y}px`,
               }}
             >
               💊
@@ -213,20 +283,37 @@ export default function App() {
           {finished && (
             <section
               className="final-card"
-              onPointerDown={(e) => e.stopPropagation()}
+              onPointerDown={(e) =>
+                e.stopPropagation()
+              }
             >
-              <div className="achievement">Logro desbloqueado</div>
+              <div className="achievement">
+                Logro desbloqueado
+              </div>
 
               <h1>Paciente curado</h1>
 
-              <p>Has completado las 100 dosis.</p>
+              <p>
+                Has completado el tratamiento completo.
+              </p>
 
               <div className="timebox">
                 <small>Tiempo final</small>
-                <span>{formatTime(elapsed)}</span>
+
+                <span>
+                  {formatTime(elapsed)}
+                </span>
               </div>
 
-              <button onPointerDown={restart}>Reiniciar tratamiento</button>
+              {bestTime === elapsed && (
+                <div className="record-badge">
+                  Nuevo récord personal
+                </div>
+              )}
+
+              <button onPointerDown={restart}>
+                Repetir tratamiento
+              </button>
             </section>
           )}
         </>
