@@ -31,13 +31,14 @@ export default function App() {
   const [finished, setFinished] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [bestTime, setBestTime] = useState(null);
+  const [buttonPressed, setButtonPressed] = useState(false);
 
   const startTimeRef = useRef(null);
   const clicksRef = useRef(0);
 
   const bgMusicRef = useRef(null);
-  const clickSoundRef = useRef(null);
   const winSoundRef = useRef(null);
+  const introClickRef = useRef(null);
 
   const loadProgress = loadedCount / TOTAL_FRAMES;
   const gameProgress = clicks / TOTAL_PILLS;
@@ -47,11 +48,11 @@ export default function App() {
     bgMusicRef.current.loop = true;
     bgMusicRef.current.volume = 0.18;
 
-    clickSoundRef.current = new Audio("/assets/click.mp3");
-    clickSoundRef.current.volume = 0.45;
-
     winSoundRef.current = new Audio("/assets/win.mp3");
     winSoundRef.current.volume = 0.65;
+
+    introClickRef.current = new Audio("/assets/intro_click.mp3");
+    introClickRef.current.volume = 0.5;
   }, []);
 
   useEffect(() => {
@@ -68,24 +69,16 @@ export default function App() {
 
       img.onload = () => {
         if (cancelled) return;
-
         completed++;
         setLoadedCount(completed);
-
-        if (completed === TOTAL_FRAMES) {
-          setLoaded(true);
-        }
+        if (completed === TOTAL_FRAMES) setLoaded(true);
       };
 
       img.onerror = () => {
         if (cancelled) return;
-
         completed++;
         setLoadedCount(completed);
-
-        if (completed === TOTAL_FRAMES) {
-          setLoaded(true);
-        }
+        if (completed === TOTAL_FRAMES) setLoaded(true);
       };
 
       img.src = src;
@@ -107,23 +100,29 @@ export default function App() {
   }, [started, finished]);
 
   function playClickSound() {
-    if (!clickSoundRef.current) return;
-
-    const sound = clickSoundRef.current.cloneNode();
-    sound.volume = 0.45;
-    sound.currentTime = 0;
-    sound.play().catch(() => {});
+    const click = new Audio("/assets/click.mp3");
+    click.volume = 0.45;
+    click.play().catch(() => {});
   }
 
   function startGame(e) {
     e.stopPropagation();
 
-    setReady(true);
+    setButtonPressed(true);
 
-    if (bgMusicRef.current) {
-      bgMusicRef.current.currentTime = 0;
-      bgMusicRef.current.play().catch(() => {});
+    if (introClickRef.current) {
+      introClickRef.current.currentTime = 0;
+      introClickRef.current.play().catch(() => {});
     }
+
+    setTimeout(() => {
+      setReady(true);
+
+      if (bgMusicRef.current) {
+        bgMusicRef.current.currentTime = 0;
+        bgMusicRef.current.play().catch(() => {});
+      }
+    }, 180);
   }
 
   function handleClick(e) {
@@ -203,11 +202,7 @@ export default function App() {
       className={`app ${started ? "pulse-hit" : ""}`}
       onPointerDown={handleClick}
     >
-      <img
-        className="frame-image"
-        src={currentFrame}
-        draggable="false"
-      />
+      <img className="frame-image" src={currentFrame} draggable="false" />
 
       <div className="vignette" />
       <div className="ambient-glow" />
@@ -220,15 +215,9 @@ export default function App() {
             alt="Recovery Room"
           />
 
-          <p className="eyebrow">
-            Recovery Room Experience
-          </p>
+          <p className="eyebrow">Recovery Room Experience</p>
 
-          <img
-            src="/assets/ready.png"
-            alt="Ready"
-            className="ready-image"
-          />
+          <img src="/assets/ready.png" alt="Ready" className="ready-image" />
 
           <div className="loading-bar">
             <div style={{ width: `${loadProgress * 100}%` }} />
@@ -248,9 +237,7 @@ export default function App() {
             alt="Recovery Room"
           />
 
-          <p className="eyebrow">
-            Tratamiento listo
-          </p>
+          <p className="eyebrow">Tratamiento listo</p>
 
           <img
             src="/assets/ready.png"
@@ -259,7 +246,7 @@ export default function App() {
           />
 
           <button
-            className="start-button"
+            className={`start-button ${buttonPressed ? "pressed" : ""}`}
             onPointerDown={startGame}
           >
             Iniciar tratamiento
@@ -321,33 +308,31 @@ export default function App() {
               className="final-card"
               onPointerDown={(e) => e.stopPropagation()}
             >
-              <div className="achievement">
-                Logro desbloqueado
-              </div>
+              <div className="achievement">Logro desbloqueado</div>
 
               <h1>Paciente curado</h1>
 
-              <p>
-                Has completado el tratamiento completo.
-              </p>
+              <p>Has completado el tratamiento completo.</p>
 
               <div className="timebox">
                 <small>Tiempo final</small>
-
-                <span>
-                  {formatTime(elapsed)}
-                </span>
+                <span>{formatTime(elapsed)}</span>
               </div>
 
               {bestTime === elapsed && (
-                <div className="record-badge">
-                  Nuevo récord personal
-                </div>
+                <div className="record-badge">Nuevo récord personal</div>
               )}
 
-              <button onPointerDown={restart}>
-                Repetir tratamiento
-              </button>
+<button
+  className="repeat-button"
+  onPointerDown={restart}
+>
+  Repetir tratamiento
+</button>
+
+<p className="reward-text">
+  Visítanos en nuestro stand y consigue tu recompensa
+</p>
             </section>
           )}
         </>
