@@ -118,7 +118,6 @@ export default function App() {
 
     if (introClickRef.current) {
       introClickRef.current.currentTime = 0;
-
       introClickRef.current.play().catch(() => {});
     }
 
@@ -127,7 +126,6 @@ export default function App() {
 
       if (bgMusicRef.current) {
         bgMusicRef.current.currentTime = 0;
-
         bgMusicRef.current.play().catch(() => {});
       }
     }, 180);
@@ -139,7 +137,6 @@ export default function App() {
 
     if (!started) {
       setStarted(true);
-
       startTimeRef.current = Date.now();
     }
 
@@ -160,7 +157,6 @@ export default function App() {
     );
 
     setClicks(nextClicks);
-
     setCurrentFrame(frames[nextFrameIndex]);
 
     setPills((prev) => [
@@ -173,8 +169,7 @@ export default function App() {
     ]);
 
     if (nextClicks >= TOTAL_PILLS) {
-      const finalTime =
-        Date.now() - startTimeRef.current;
+      const finalTime = Date.now() - startTimeRef.current;
 
       if (bgMusicRef.current) {
         bgMusicRef.current.pause();
@@ -182,18 +177,13 @@ export default function App() {
 
       if (winSoundRef.current) {
         winSoundRef.current.currentTime = 0;
-
         winSoundRef.current.play().catch(() => {});
       }
 
       setFinished(true);
-
       setElapsed(finalTime);
 
-      if (
-        !bestTime ||
-        finalTime < bestTime
-      ) {
+      if (!bestTime || finalTime < bestTime) {
         setBestTime(finalTime);
 
         localStorage.setItem(
@@ -207,29 +197,29 @@ export default function App() {
   function restart(e) {
     e.stopPropagation();
 
+    if (introClickRef.current) {
+      introClickRef.current.currentTime = 0;
+      introClickRef.current.play().catch(() => {});
+    }
+
     clicksRef.current = 0;
 
     setClicks(0);
     setStarted(false);
     setFinished(false);
     setElapsed(0);
-
     setPills([]);
-
     setCurrentFrame(frames[0]);
 
     if (bgMusicRef.current) {
       bgMusicRef.current.currentTime = 0;
-
       bgMusicRef.current.play().catch(() => {});
     }
   }
 
   return (
     <main
-      className={`app ${
-        started ? "pulse-hit" : ""
-      }`}
+      className={`app ${started ? "pulse-hit" : ""}`}
       onPointerDown={handleClick}
     >
       <img
@@ -268,8 +258,7 @@ export default function App() {
           </div>
 
           <p className="loading-count">
-            Preparando tratamiento ·{" "}
-            {loadedCount}/100
+            Preparando tratamiento · {loadedCount}/100
           </p>
         </section>
       )}
@@ -346,8 +335,7 @@ export default function App() {
 
           {!started && (
             <div className="start-message">
-              Pincha en la pantalla para iniciar
-              tratamiento
+              Pincha en la pantalla para iniciar tratamiento
             </div>
           )}
 
@@ -389,8 +377,7 @@ export default function App() {
               <h1>Paciente curado</h1>
 
               <p>
-                Has completado el tratamiento
-                completo.
+                Has completado el tratamiento completo.
               </p>
 
               <div className="timebox">
@@ -415,8 +402,7 @@ export default function App() {
               </button>
 
               <p className="reward-text">
-                Visítanos en nuestro stand y
-                consigue tu recompensa
+                Visítanos en nuestro stand y consigue tu recompensa
               </p>
             </section>
           )}
