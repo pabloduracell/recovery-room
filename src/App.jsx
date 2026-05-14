@@ -6,6 +6,7 @@ const TOTAL_PILLS = 100;
 
 const frames = Array.from({ length: TOTAL_FRAMES }, (_, i) => {
   const num = String(i + 1).padStart(3, "0");
+
   return `https://res.cloudinary.com/dbhwofvfv/image/upload/q_auto/f_auto/v1778683206/frame_${num}.jpg`;
 });
 
@@ -31,6 +32,7 @@ export default function App() {
   const [finished, setFinished] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [bestTime, setBestTime] = useState(null);
+
   const [buttonPressed, setButtonPressed] = useState(false);
 
   const startTimeRef = useRef(null);
@@ -51,13 +53,16 @@ export default function App() {
     winSoundRef.current = new Audio("/assets/win.mp3");
     winSoundRef.current.volume = 0.65;
 
-    introClickRef.current = new Audio("/assets/intro_click.mp3");
-    introClickRef.current.volume = 0.5;
+    introClickRef.current = new Audio("/assets/intro_clic.mp3");
+    introClickRef.current.volume = 0.55;
   }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem("best-treatment-time");
-    if (stored) setBestTime(Number(stored));
+
+    if (stored) {
+      setBestTime(Number(stored));
+    }
   }, []);
 
   useEffect(() => {
@@ -69,16 +74,24 @@ export default function App() {
 
       img.onload = () => {
         if (cancelled) return;
+
         completed++;
         setLoadedCount(completed);
-        if (completed === TOTAL_FRAMES) setLoaded(true);
+
+        if (completed === TOTAL_FRAMES) {
+          setLoaded(true);
+        }
       };
 
       img.onerror = () => {
         if (cancelled) return;
+
         completed++;
         setLoadedCount(completed);
-        if (completed === TOTAL_FRAMES) setLoaded(true);
+
+        if (completed === TOTAL_FRAMES) {
+          setLoaded(true);
+        }
       };
 
       img.src = src;
@@ -99,9 +112,11 @@ export default function App() {
     return () => clearInterval(interval);
   }, [started, finished]);
 
-  function playClickSound() {
-    const click = new Audio("/assets/click.mp3");
-    click.volume = 0.45;
+  function playPillClick() {
+    const click = new Audio("/assets/clic.mp3");
+
+    click.volume = 0.42;
+
     click.play().catch(() => {});
   }
 
@@ -112,6 +127,7 @@ export default function App() {
 
     if (introClickRef.current) {
       introClickRef.current.currentTime = 0;
+
       introClickRef.current.play().catch(() => {});
     }
 
@@ -120,6 +136,7 @@ export default function App() {
 
       if (bgMusicRef.current) {
         bgMusicRef.current.currentTime = 0;
+
         bgMusicRef.current.play().catch(() => {});
       }
     }, 180);
@@ -131,21 +148,30 @@ export default function App() {
 
     if (!started) {
       setStarted(true);
+
       startTimeRef.current = Date.now();
     }
 
     navigator.vibrate?.(15);
-    playClickSound();
 
-    const nextClicks = Math.min(clicksRef.current + 1, TOTAL_PILLS);
+    playPillClick();
+
+    const nextClicks = Math.min(
+      clicksRef.current + 1,
+      TOTAL_PILLS
+    );
+
     clicksRef.current = nextClicks;
 
     const nextFrameIndex = Math.min(
       TOTAL_FRAMES - 1,
-      Math.round((nextClicks / TOTAL_PILLS) * (TOTAL_FRAMES - 1))
+      Math.round(
+        (nextClicks / TOTAL_PILLS) * (TOTAL_FRAMES - 1)
+      )
     );
 
     setClicks(nextClicks);
+
     setCurrentFrame(frames[nextFrameIndex]);
 
     setPills((prev) => [
@@ -158,7 +184,8 @@ export default function App() {
     ]);
 
     if (nextClicks >= TOTAL_PILLS) {
-      const finalTime = Date.now() - startTimeRef.current;
+      const finalTime =
+        Date.now() - startTimeRef.current;
 
       if (bgMusicRef.current) {
         bgMusicRef.current.pause();
@@ -166,15 +193,24 @@ export default function App() {
 
       if (winSoundRef.current) {
         winSoundRef.current.currentTime = 0;
+
         winSoundRef.current.play().catch(() => {});
       }
 
       setFinished(true);
+
       setElapsed(finalTime);
 
-      if (!bestTime || finalTime < bestTime) {
+      if (
+        !bestTime ||
+        finalTime < bestTime
+      ) {
         setBestTime(finalTime);
-        localStorage.setItem("best-treatment-time", String(finalTime));
+
+        localStorage.setItem(
+          "best-treatment-time",
+          String(finalTime)
+        );
       }
     }
   }
@@ -188,21 +224,30 @@ export default function App() {
     setStarted(false);
     setFinished(false);
     setElapsed(0);
+
     setPills([]);
+
     setCurrentFrame(frames[0]);
 
     if (bgMusicRef.current) {
       bgMusicRef.current.currentTime = 0;
+
       bgMusicRef.current.play().catch(() => {});
     }
   }
 
   return (
     <main
-      className={`app ${started ? "pulse-hit" : ""}`}
+      className={`app ${
+        started ? "pulse-hit" : ""
+      }`}
       onPointerDown={handleClick}
     >
-      <img className="frame-image" src={currentFrame} draggable="false" />
+      <img
+        className="frame-image"
+        src={currentFrame}
+        draggable="false"
+      />
 
       <div className="vignette" />
       <div className="ambient-glow" />
@@ -215,16 +260,27 @@ export default function App() {
             alt="Recovery Room"
           />
 
-          <p className="eyebrow">Recovery Room Experience</p>
+          <p className="eyebrow">
+            Recovery Room Experience
+          </p>
 
-          <img src="/assets/ready.png" alt="Ready" className="ready-image" />
+          <img
+            src="/assets/ready.png"
+            alt="Ready"
+            className="ready-image"
+          />
 
           <div className="loading-bar">
-            <div style={{ width: `${loadProgress * 100}%` }} />
+            <div
+              style={{
+                width: `${loadProgress * 100}%`,
+              }}
+            />
           </div>
 
           <p className="loading-count">
-            Preparando tratamiento · {loadedCount}/100
+            Preparando tratamiento ·{" "}
+            {loadedCount}/100
           </p>
         </section>
       )}
@@ -237,7 +293,9 @@ export default function App() {
             alt="Recovery Room"
           />
 
-          <p className="eyebrow">Tratamiento listo</p>
+          <p className="eyebrow">
+            Tratamiento listo
+          </p>
 
           <img
             src="/assets/ready.png"
@@ -246,7 +304,9 @@ export default function App() {
           />
 
           <button
-            className={`start-button ${buttonPressed ? "pressed" : ""}`}
+            className={`start-button ${
+              buttonPressed ? "pressed" : ""
+            }`}
             onPointerDown={startGame}
           >
             Iniciar tratamiento
@@ -260,31 +320,45 @@ export default function App() {
             <div className="hud-top">
               <div>
                 <small>Estado</small>
-                <strong>{clicks}/100 dosis</strong>
+
+                <strong>
+                  {clicks}/100 dosis
+                </strong>
               </div>
 
               <div>
                 <small>Tiempo</small>
-                <strong>{formatTime(elapsed)}</strong>
+
+                <strong>
+                  {formatTime(elapsed)}
+                </strong>
               </div>
 
               <div>
                 <small>Récord</small>
-                <strong>{bestTime ? formatTime(bestTime) : "--:--.-"}</strong>
+
+                <strong>
+                  {bestTime
+                    ? formatTime(bestTime)
+                    : "--:--.-"}
+                </strong>
               </div>
             </div>
 
             <div className="bar">
               <div
                 className="bar-fill"
-                style={{ width: `${gameProgress * 100}%` }}
+                style={{
+                  width: `${gameProgress * 100}%`,
+                }}
               />
             </div>
           </section>
 
           {!started && (
             <div className="start-message">
-              Pincha en la pantalla para iniciar tratamiento
+              Pincha en la pantalla para iniciar
+              tratamiento
             </div>
           )}
 
@@ -295,8 +369,12 @@ export default function App() {
               style={{
                 left: pill.x - 35,
                 top: pill.y - 35,
-                "--mx": `${window.innerWidth / 2 - pill.x}px`,
-                "--my": `${window.innerHeight / 2 - pill.y}px`,
+                "--mx": `${
+                  window.innerWidth - pill.x
+                }px`,
+                "--my": `${
+                  window.innerHeight / 2 - pill.y
+                }px`,
               }}
             >
               💊
@@ -306,33 +384,46 @@ export default function App() {
           {finished && (
             <section
               className="final-card"
-              onPointerDown={(e) => e.stopPropagation()}
+              onPointerDown={(e) =>
+                e.stopPropagation()
+              }
             >
-              <div className="achievement">Logro desbloqueado</div>
+              <div className="achievement">
+                Logro desbloqueado
+              </div>
 
               <h1>Paciente curado</h1>
 
-              <p>Has completado el tratamiento completo.</p>
+              <p>
+                Has completado el tratamiento
+                completo.
+              </p>
 
               <div className="timebox">
                 <small>Tiempo final</small>
-                <span>{formatTime(elapsed)}</span>
+
+                <span>
+                  {formatTime(elapsed)}
+                </span>
               </div>
 
               {bestTime === elapsed && (
-                <div className="record-badge">Nuevo récord personal</div>
+                <div className="record-badge">
+                  Nuevo récord personal
+                </div>
               )}
 
-<button
-  className="repeat-button"
-  onPointerDown={restart}
->
-  Repetir tratamiento
-</button>
+              <button
+                className="repeat-button"
+                onPointerDown={restart}
+              >
+                Repetir tratamiento
+              </button>
 
-<p className="reward-text">
-  Visítanos en nuestro stand y consigue tu recompensa
-</p>
+              <p className="reward-text">
+                Visítanos en nuestro stand y
+                consigue tu recompensa
+              </p>
             </section>
           )}
         </>
