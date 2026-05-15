@@ -56,7 +56,7 @@ export default function App() {
     winSoundRef.current = new Audio("/assets/win.mp3");
     winSoundRef.current.volume = 0.65;
 
-    wrongSoundRef.current = new Audio("/assets/wrong.mp4");
+    wrongSoundRef.current = new Audio("/assets/wrong.mp3");
     wrongSoundRef.current.volume = 0.75;
 
     introClickRef.current = new Audio("/assets/intro_clic.mp3");
