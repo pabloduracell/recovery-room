@@ -3,6 +3,7 @@ import "./styles.css";
 
 const TOTAL_FRAMES = 100;
 const TOTAL_PILLS = 100;
+const TIME_LIMIT = 20 * 1000;
 
 const frames = Array.from({ length: TOTAL_FRAMES }, (_, i) => {
   const num = String(i + 1).padStart(3, "0");
@@ -11,12 +12,12 @@ const frames = Array.from({ length: TOTAL_FRAMES }, (_, i) => {
 });
 
 function formatTime(ms) {
-  const total = Math.floor(ms / 1000);
-  const minutes = Math.floor(total / 60);
+  const safeMs = Math.max(0, ms);
+  const total = Math.floor(safeMs / 1000);
   const seconds = total % 60;
-  const tenths = Math.floor((ms % 1000) / 100);
+  const tenths = Math.floor((safeMs % 1000) / 100);
 
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${tenths}`;
+  return `${String(seconds).padStart(2, "0")}.${tenths}`;
 }
 
 export default function App() {
@@ -30,7 +31,9 @@ export default function App() {
 
   const [started, setStarted] = useState(false);
   const [finished, setFinished] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
+  const [finalTime, setFinalTime] = useState(0);
   const [bestTime, setBestTime] = useState(null);
   const [buttonPressed, setButtonPressed] = useState(false);
 
@@ -102,14 +105,26 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!started || finished) return;
+    if (!started || finished || failed) return;
 
     const interval = setInterval(() => {
-      setElapsed(Date.now() - startTimeRef.current);
+      const elapsed = Date.now() - startTimeRef.current;
+      const remaining = TIME_LIMIT - elapsed;
+
+      setTimeLeft(remaining);
+
+      if (remaining <= 0 && clicksRef.current < TOTAL_PILLS) {
+        setFailed(true);
+        setTimeLeft(0);
+
+        if (bgMusicRef.current) {
+          bgMusicRef.current.pause();
+        }
+      }
     }, 80);
 
     return () => clearInterval(interval);
-  }, [started, finished]);
+  }, [started, finished, failed]);
 
   function startGame(e) {
     e.stopPropagation();
@@ -132,12 +147,13 @@ export default function App() {
   }
 
   function handleClick(e) {
-    if (!loaded || !ready || finished) return;
+    if (!loaded || !ready || finished || failed) return;
     if (clicksRef.current >= TOTAL_PILLS) return;
 
     if (!started) {
       setStarted(true);
       startTimeRef.current = Date.now();
+      setTimeLeft(TIME_LIMIT);
     }
 
     navigator.vibrate?.(15);
@@ -169,27 +185,30 @@ export default function App() {
     ]);
 
     if (nextClicks >= TOTAL_PILLS) {
-      const finalTime = Date.now() - startTimeRef.current;
+      const completedTime = Date.now() - startTimeRef.current;
 
-      if (bgMusicRef.current) {
-        bgMusicRef.current.pause();
-      }
+      if (completedTime <= TIME_LIMIT) {
+        if (bgMusicRef.current) {
+          bgMusicRef.current.pause();
+        }
 
-      if (winSoundRef.current) {
-        winSoundRef.current.currentTime = 0;
-        winSoundRef.current.play().catch(() => {});
-      }
+        if (winSoundRef.current) {
+          winSoundRef.current.currentTime = 0;
+          winSoundRef.current.play().catch(() => {});
+        }
 
-      setFinished(true);
-      setElapsed(finalTime);
+        setFinished(true);
+        setFinalTime(completedTime);
+        setTimeLeft(Math.max(0, TIME_LIMIT - completedTime));
 
-      if (!bestTime || finalTime < bestTime) {
-        setBestTime(finalTime);
+        if (!bestTime || completedTime < bestTime) {
+          setBestTime(completedTime);
 
-        localStorage.setItem(
-          "best-treatment-time",
-          String(finalTime)
-        );
+          localStorage.setItem(
+            "best-treatment-time",
+            String(completedTime)
+          );
+        }
       }
     }
   }
@@ -207,7 +226,9 @@ export default function App() {
     setClicks(0);
     setStarted(false);
     setFinished(false);
-    setElapsed(0);
+    setFailed(false);
+    setFinalTime(0);
+    setTimeLeft(TIME_LIMIT);
     setPills([]);
     setCurrentFrame(frames[0]);
 
@@ -305,10 +326,10 @@ export default function App() {
               </div>
 
               <div>
-                <small>Tiempo</small>
+                <small>Tiempo restante</small>
 
                 <strong>
-                  {formatTime(elapsed)}
+                  {formatTime(timeLeft)}s
                 </strong>
               </div>
 
@@ -317,8 +338,8 @@ export default function App() {
 
                 <strong>
                   {bestTime
-                    ? formatTime(bestTime)
-                    : "--:--.-"}
+                    ? `${formatTime(bestTime)}s`
+                    : "--.-s"}
                 </strong>
               </div>
             </div>
@@ -371,24 +392,24 @@ export default function App() {
               }
             >
               <div className="achievement">
-                Logro desbloqueado
+                Misión completada
               </div>
 
               <h1>Paciente curado</h1>
 
               <p>
-                Has completado el tratamiento completo.
+                Has completado el tratamiento antes de que acabara el tiempo.
               </p>
 
               <div className="timebox">
                 <small>Tiempo final</small>
 
                 <span>
-                  {formatTime(elapsed)}
+                  {formatTime(finalTime)}s
                 </span>
               </div>
 
-              {bestTime === elapsed && (
+              {bestTime === finalTime && (
                 <div className="record-badge">
                   Nuevo récord personal
                 </div>
@@ -404,6 +425,40 @@ export default function App() {
               <p className="reward-text">
                 Visítanos en nuestro stand y consigue tu recompensa
               </p>
+            </section>
+          )}
+
+          {failed && (
+            <section
+              className="final-card"
+              onPointerDown={(e) =>
+                e.stopPropagation()
+              }
+            >
+              <div className="achievement">
+                Tiempo agotado
+              </div>
+
+              <h1>Paciente perdido</h1>
+
+              <p>
+                No has completado el tratamiento dentro de los 20 segundos.
+              </p>
+
+              <div className="timebox">
+                <small>Dosis aplicadas</small>
+
+                <span>
+                  {clicks}/100
+                </span>
+              </div>
+
+              <button
+                className="repeat-button"
+                onPointerDown={restart}
+              >
+                Reintentar tratamiento
+              </button>
             </section>
           )}
         </>
