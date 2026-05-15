@@ -36,7 +36,7 @@ export default function App() {
   const [finalTime, setFinalTime] = useState(0);
   const [bestTime, setBestTime] = useState(null);
   const [buttonPressed, setButtonPressed] = useState(false);
-  const [rightArmThrowing, setRightArmThrowing] = useState(false);
+  
 
   const startTimeRef = useRef(null);
   const clicksRef = useRef(0);
@@ -167,16 +167,8 @@ export default function App() {
     }
 
     navigator.vibrate?.(15);
-    const isRightSide =
-  e.clientX > window.innerWidth / 2;
-
-if (isRightSide) {
-  setRightArmThrowing(true);
-
-  setTimeout(() => {
-    setRightArmThrowing(false);
-  }, 140);
-}
+   
+   
 
     const nextClicks = Math.min(
       clicksRef.current + 1,
@@ -271,17 +263,7 @@ if (isRightSide) {
 
       <div className="vignette" />
       <div className="ambient-glow" />
-      <img
-  className={`right-arm ${
-    rightArmThrowing ? "throwing" : ""
-  }`}
-  src={
-    rightArmThrowing
-      ? "/assets/right_arm_extended.png"
-      : "/assets/right_arm_flexed.png"
-  }
-  draggable="false"
-/>
+     
 
       {!loaded && (
         <section className="loading-screen">
