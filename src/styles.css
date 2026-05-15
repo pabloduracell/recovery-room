@@ -626,3 +626,30 @@ button {
   object-fit: contain;
   pointer-events: none;
 }
+
+.fail-card {
+  background:
+    radial-gradient(circle at top, rgba(239,68,68,.22), transparent 42%),
+    rgba(255,255,255,.98);
+  box-shadow:
+    0 30px 120px rgba(0,0,0,.8),
+    0 0 90px rgba(239,68,68,.28);
+}
+
+.fail-achievement {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.fail-timebox {
+  background: #1f0505;
+}
+
+.fail-timebox span {
+  color: #ef4444;
+  text-shadow: 0 0 35px rgba(239,68,68,.45);
+}
+
+.fail-button {
+  background: #7f1d1d;
+}

@@ -42,6 +42,7 @@ export default function App() {
 
   const bgMusicRef = useRef(null);
   const winSoundRef = useRef(null);
+  const wrongSoundRef = useRef(null);
   const introClickRef = useRef(null);
 
   const loadProgress = loadedCount / TOTAL_FRAMES;
@@ -54,6 +55,9 @@ export default function App() {
 
     winSoundRef.current = new Audio("/assets/win.mp3");
     winSoundRef.current.volume = 0.65;
+
+    wrongSoundRef.current = new Audio("/assets/wrong.mp4");
+    wrongSoundRef.current.volume = 0.75;
 
     introClickRef.current = new Audio("/assets/intro_clic.mp3");
     introClickRef.current.volume = 0.55;
@@ -119,6 +123,11 @@ export default function App() {
 
         if (bgMusicRef.current) {
           bgMusicRef.current.pause();
+        }
+
+        if (wrongSoundRef.current) {
+          wrongSoundRef.current.currentTime = 0;
+          wrongSoundRef.current.play().catch(() => {});
         }
       }
     }, 80);
@@ -430,12 +439,12 @@ export default function App() {
 
           {failed && (
             <section
-              className="final-card"
+              className="final-card fail-card"
               onPointerDown={(e) =>
                 e.stopPropagation()
               }
             >
-              <div className="achievement">
+              <div className="achievement fail-achievement">
                 Tiempo agotado
               </div>
 
@@ -445,7 +454,7 @@ export default function App() {
                 No has completado el tratamiento dentro de los 20 segundos.
               </p>
 
-              <div className="timebox">
+              <div className="timebox fail-timebox">
                 <small>Dosis aplicadas</small>
 
                 <span>
@@ -454,7 +463,7 @@ export default function App() {
               </div>
 
               <button
-                className="repeat-button"
+                className="repeat-button fail-button"
                 onPointerDown={restart}
               >
                 Reintentar tratamiento
